@@ -8,10 +8,13 @@ from flask_migrate import Migrate
 from project.logger import get_logger
 from project.middleware import setup_request_logging
 
+from dotenv import load_dotenv
+
 toolbar = DebugToolbarExtension()
 migrate = Migrate()
 bcrypt = Bcrypt()
 db = SQLAlchemy()  # Init db global, attach sau khi create_app
+load_dotenv()
 
 
 def create_app():
@@ -44,22 +47,22 @@ def create_app():
     # Users
     from project.api.users import users_blueprint
 
-    app.register_blueprint(users_blueprint, url_prefix="/users")
+    app.register_blueprint(users_blueprint, url_prefix="/api/users")
     logger.info("Users blueprint registered")
 
     from project.api.auth import auth_blueprint
 
-    app.register_blueprint(auth_blueprint, url_prefix="/auth")
+    app.register_blueprint(auth_blueprint, url_prefix="/api/auth")
     logger.info("Auth blueprint registered")
 
     from project.api.exercises import exercises_blueprint
 
-    app.register_blueprint(exercises_blueprint, url_prefix="/exercises")
+    app.register_blueprint(exercises_blueprint, url_prefix="/api/exercises")
     logger.info("Exercises blueprint registered")
 
     from project.api.scores import scores_blueprint
 
-    app.register_blueprint(scores_blueprint, url_prefix="/scores")
+    app.register_blueprint(scores_blueprint, url_prefix="/api/scores")
     logger.info("Scores blueprint registered")
 
     # Setup request logging middleware

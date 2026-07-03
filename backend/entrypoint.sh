@@ -18,6 +18,8 @@ echo "PostgreSQL started"
 # Chạy setup_db với debug
 
 python manage.py recreate_db
+# Đánh dấu migration đã được apply để tránh conflict
+python manage.py db stamp head
 python manage.py seed_db
 
 gunicorn -b 0.0.0.0:$PORT manage:app
