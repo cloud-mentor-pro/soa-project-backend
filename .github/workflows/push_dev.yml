@@ -2,8 +2,8 @@ name: CI/CD Pipeline - Independent Jobs
 
 on:
   push:
-    branches: 
-      - 'develop'
+    branches:
+      - "develop"
 
 permissions:
   id-token: write
@@ -18,7 +18,7 @@ jobs:
       image-name: ${{ github.event.repository.name }}
       aws-account-id: "381492231891"
       aws-region: us-east-1
-      service-type: codeland-api
+      service-type: api
 
   deploy-codeland-api:
     name: Deploy Codeland API to ECS
@@ -29,4 +29,4 @@ jobs:
       image-name: ${{ github.event.repository.name }}
       aws-account-id: "381492231891"
       aws-region: us-east-1
-      service-type: codeland-api
+      service-type: api

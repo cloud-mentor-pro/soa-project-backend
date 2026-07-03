@@ -24,15 +24,14 @@ env:
   AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
   AWS_REGION: ${{ inputs.aws-region }}
   SERVICE_TYPE: ${{ inputs.service-type }}
-  ECR_REPOSITORY: soa-ecr-codeland-${{ inputs.service-type }}
-  ECS_CLUSTER: soa-ecs-codeland-${{ inputs.service-type }}
-  ECS_SERVICE: soa-ecs-service-codeland-${{ inputs.service-type }}
-  CONTAINER_NAME: soa-container-codeland-${{ inputs.service-type }}
+  ECR_REPOSITORY: dev-soa-ecr-${{ inputs.service-type }}
+  ECS_CLUSTER: dev-soa-ecs-${{ inputs.service-type }}
+  ECS_SERVICE: dev-soa-svc-${{ inputs.service-type }}
+  CONTAINER_NAME: dev-soa-container-${{ inputs.service-type }}
   ECS_TASK_DEFINITION: ./backend/taskdef_dev.json
   ENVIRONMENT: develop
   # TODO: Thay thế bằng giá trị môi trường của bạn
-  SECRET_ARN: rds!db-321d2a63-7f6e-4e9a-ae36-85716ab3c38b
-  
+  SECRET_ARN: rds!db-e4922038-e656-49ac-9b46-5a8bb4820aa5
 
 permissions:
   id-token: write
@@ -44,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deployment-status: ${{ steps.set-status.outputs.status }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,7 +64,7 @@ jobs:
         run: |
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
           echo "IMAGE_TAG=dev-${SHORT_SHA}" >> $GITHUB_ENV
-          
+
       - name: Set Image URI
         id: set-image
         run: |
@@ -94,7 +93,7 @@ jobs:
             --services ${{ env.ECS_SERVICE }} \
             --query "services[0].desiredCount" \
             --output text)
-          
+
           # If desired count current is 0, upate to 1
           if [ "$CURRENT_DESIRED_COUNT" -eq "0" ]; then
             echo "Current desired count is 0, will update to 1"
@@ -103,7 +102,7 @@ jobs:
             echo "Current desired count is ${CURRENT_DESIRED_COUNT}, keeping it unchanged"
             DESIRED_COUNT=$CURRENT_DESIRED_COUNT
           fi
-          
+
           echo "DESIRED_COUNT=${DESIRED_COUNT}" >> $GITHUB_ENV
           echo "Final desired count will be: ${DESIRED_COUNT}"
 

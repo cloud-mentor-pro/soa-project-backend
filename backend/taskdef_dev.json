@@ -1,12 +1,12 @@
 {
     "containerDefinitions": [
         {
-            "name": "soa-container-codeland-${SERVICE_TYPE}",
+            "name": "dev-soa-container-${SERVICE_TYPE}",
             "image": "${IMAGE_URI}",
             "cpu": 0,
             "portMappings": [
                 {
-                    "name": "soa-container-codeland-${SERVICE_TYPE}-80-tcp",
+                    "name": "dev-soa-container-${SERVICE_TYPE}-80-tcp",
                     "containerPort": 80,
                     "hostPort": 80,
                     "protocol": "tcp"
@@ -46,11 +46,11 @@
             "secrets": [
                 {
                     "name": "SECRET_KEY",
-                    "valueFrom": "arn:aws:ssm:${AWS_REGION}:${AWS_ACCOUNT_ID}:parameter/soa-param-codeland-secret-key"
+                    "valueFrom": "arn:aws:ssm:${AWS_REGION}:${AWS_ACCOUNT_ID}:parameter/soa/dev/secret-key"
                 },
                 {
                     "name": "DB_URL",
-                    "valueFrom": "arn:aws:ssm:${AWS_REGION}:${AWS_ACCOUNT_ID}:parameter/soa-param-codeland-db-url"
+                    "valueFrom": "arn:aws:ssm:${AWS_REGION}:${AWS_ACCOUNT_ID}:parameter/soa/dev/db-url"
                 },
                 {
                     "name": "DB_USER",
@@ -69,7 +69,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/aws/ecs/soa-ecs-codeland-${SERVICE_TYPE}",
+                    "awslogs-group": "/aws/ecs/dev-soa-${SERVICE_TYPE}",
                     "awslogs-region": "${AWS_REGION}",
                     "awslogs-stream-prefix": "ecs"
                 },
@@ -79,9 +79,9 @@
             "credentialSpecs": []
         }
     ],
-    "family": "soa-task-codeland-${SERVICE_TYPE}",
-    "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/soa-iam-codeland-${SERVICE_TYPE}-ecs-task",
-    "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/soa-iam-codeland-${SERVICE_TYPE}-ecs-execution",
+    "family": "dev-soa-task-${SERVICE_TYPE}",
+    "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/dev-soa-role-ecs-task-${SERVICE_TYPE}",
+    "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/dev-soa-role-ecs-execution-${SERVICE_TYPE}",
     "networkMode": "awsvpc",
     "volumes": [],
     "requiresCompatibilities": [
@@ -104,7 +104,7 @@
         },
         {
             "key": "Name",
-            "value": "soa-task-codeland-${SERVICE_TYPE}"
+            "value": "dev-soa-task-${SERVICE_TYPE}"
         }
     ]
 }
