@@ -245,14 +245,88 @@
         }
       }
     },
+    "/users/manager": {
+      "get": {
+        "tags": ["users"],
+        "summary": "User management page (HTML)",
+        "description": "Get HTML page for user management (returns HTML template)",
+        "responses": {
+          "200": {
+            "description": "User management HTML page",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<!DOCTYPE html>..."
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["users"],
+        "summary": "Create user via HTML form",
+        "description": "Create a new user using HTML form data (used by management page)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "johndoe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "securepassword123"
+                  }
+                },
+                "required": ["username", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created and management page returned",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<!DOCTYPE html>..."
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid form data",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/ping": {
       "get": {
         "tags": ["users"],
-        "summary": "Ping users service",
-        "description": "Health check for users service",
+        "summary": "Health check with database connectivity",
+        "description": "Health check for users service including database connection test",
         "responses": {
           "200": {
-            "description": "Service is healthy",
+            "description": "Service is healthy and database is connected",
             "content": {
               "application/json": {
                 "schema": {
@@ -265,8 +339,52 @@
                     "message": {
                       "type": "string",
                       "example": "pong!"
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "connected"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-01-15T10:30:00.000Z"
                     }
-                  }
+                  },
+                  "required": ["status", "message", "database", "timestamp"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unhealthy - database connection failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "pong!"
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "disconnected"
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "connection timeout"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-01-15T10:30:00.000Z"
+                    }
+                  },
+                  "required": ["status", "message", "database", "error", "timestamp"]
                 }
               }
             }
@@ -278,7 +396,7 @@
       "get": {
         "tags": ["users"],
         "summary": "Get all users",
-        "description": "Retrieve a list of all users",
+        "description": "Retrieve a list of all users with their latest profile image presigned URLs",
         "responses": {
           "200": {
             "description": "Users retrieved successfully",
@@ -372,11 +490,140 @@
         }
       }
     },
+    "/users/admin_create": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Admin create user page (Admin only)",
+        "description": "Get admin create user page (requires admin privileges)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin create page loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["users"],
+        "summary": "Create user with admin privileges (Admin only)",
+        "description": "Create a new user with specified admin and active status (requires admin privileges)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "example": "johndoe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 128,
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "example": "securepassword123"
+                  },
+                  "admin": {
+                    "type": "boolean",
+                    "default": false,
+                    "example": false
+                  },
+                  "active": {
+                    "type": "boolean",
+                    "default": true,
+                    "example": true
+                  }
+                },
+                "required": ["username", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "john@example.com was added!"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload or user already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/{user_id}": {
       "get": {
         "tags": ["users"],
         "summary": "Get user by ID",
-        "description": "Retrieve a specific user by their ID",
+        "description": "Retrieve a specific user by their ID with their latest profile image presigned URL",
         "parameters": [
           {
             "name": "user_id",
@@ -1126,6 +1373,278 @@
           }
         }
       }
+    },
+    "/users/{user_id}/profile-image": {
+      "post": {
+        "tags": ["users"],
+        "summary": "Upload profile image",
+        "description": "Upload a profile image for a user (requires authentication)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "User ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "profile_image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Profile image file (max 5MB, supported formats: png, jpg, jpeg, gif)"
+                  }
+                },
+                "required": ["profile_image"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile image uploaded successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profile_image_url": {
+                          "type": "string",
+                          "description": "Presigned URL for uploaded profile image",
+                          "example": "https://my-bucket.s3.amazonaws.com/profile_images/user_1/20240115_12345678.jpg?AWSAccessKeyId=..."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Upload failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["users"],
+        "summary": "Get profile image URL",
+        "description": "Get presigned URL for user's latest profile image from S3 (requires authentication)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile image URL retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile image URL retrieved successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "profile_image_url": {
+                          "type": "string",
+                          "description": "Presigned URL for the latest profile image",
+                          "example": "https://my-bucket.s3.amazonaws.com/profile_images/user_1/20240115_12345678.jpg?AWSAccessKeyId=..."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found or no profile image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["users"],
+        "summary": "Delete profile image",
+        "description": "Delete user's profile image (requires authentication)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile image deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile image deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1161,9 +1680,25 @@
           "admin": {
             "type": "boolean",
             "example": false
+          },
+          "profile_image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Presigned URL for profile image (null if no image exists)",
+            "example": "https://my-bucket.s3.amazonaws.com/profile_images/user_1/20240115_12345678.jpg?AWSAccessKeyId=..."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
           }
         },
-        "required": ["id", "username", "email", "active", "admin"]
+        "required": ["id", "username", "email", "active", "admin", "created_at", "updated_at"]
       },
       "UserRegistration": {
         "type": "object",
@@ -1236,9 +1771,19 @@
               "type": "string"
             },
             "example": ["5", "12"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
           }
         },
-        "required": ["id", "title", "body", "difficulty", "test_cases", "solutions"]
+        "required": ["id", "title", "body", "difficulty", "test_cases", "solutions", "created_at", "updated_at"]
       },
       "ExerciseCreate": {
         "type": "object",
@@ -1308,9 +1853,19 @@
               "type": "string"
             },
             "example": ["5", "12"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
           }
         },
-        "required": ["id", "user_id", "exercise_id"]
+        "required": ["id", "user_id", "exercise_id", "created_at", "updated_at"]
       },
       "ScoreCreate": {
         "type": "object",
@@ -1357,9 +1912,12 @@
           "auth_token": {
             "type": "string",
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+          },
+          "data": {
+            "$ref": "#/components/schemas/User"
           }
         },
-        "required": ["status", "message", "auth_token"]
+        "required": ["status", "message", "auth_token", "data"]
       },
       "SuccessResponse": {
         "type": "object",
@@ -1371,6 +1929,10 @@
           "message": {
             "type": "string",
             "example": "Operation completed successfully"
+          },
+          "data": {
+            "type": "object",
+            "description": "Response data (varies by endpoint)"
           }
         },
         "required": ["status", "message"]

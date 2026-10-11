@@ -9,3 +9,6 @@ flask_cors==6.0.1
 flask_debugtoolbar==0.16.0
 flask_migrate==4.1.0
 gunicorn==23.0.0
+boto3==1.35.65
+pillow==11.0.0
+python-dotenv==1.1.1

@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile-dev
     ports:
       - "5001:${PORT:-80}"
+    # env_file:
+    #   - .env
     environment:
       - FLASK_APP=project/__init__.py
       - FLASK_DEBUG=1
@@ -15,8 +17,14 @@ services:
       - DB_URL=${DB_URL:-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_NAME=${DB_NAME:-dev}
-      - SECRET_KEY=my_precious
+      - SECRET_KEY=${SECRET_KEY:-my_precious}
       - PORT=${PORT:-80}
+      - STATIC_S3_BUCKET=${STATIC_S3_BUCKET:-soa-dev-profile-images}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_TO_STDOUT=${LOG_TO_STDOUT:-false}
     depends_on:
       - db
     links:
