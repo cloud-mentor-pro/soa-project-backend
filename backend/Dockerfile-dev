@@ -1,29 +1,36 @@
-FROM python:3.12.11-slim-bullseye
+# ── Stage 1: build wheels (cần compiler + libpq-dev để build psycopg2) ──────
+FROM python:3.12-slim-bookworm AS builder
 
-# install environment dependencies
 RUN apt-get update -yqq \
-    && apt-get install -yqq --no-install-recommends \
-    netcat \
-    && apt-get -q clean
+    && apt-get install -yqq --no-install-recommends build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update -y && \
-    apt-get install -y python3-dev libpq-dev build-essential && \
-    rm -rf /var/lib/apt/lists/*
+COPY ./requirements.txt /tmp/requirements.txt
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r /tmp/requirements.txt
+
+# ── Stage 2: runtime (chỉ giữ thư viện runtime, không có compiler) ──────────
+FROM python:3.12-slim-bookworm
+
+# Log ra stdout ngay lập tức (CloudWatch), không ghi file .pyc
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 # Đặt biến môi trường mặc định cho PORT
 ENV PORT=80
 ENV DB_URL=db
 ENV DB_PORT=5432
 
+# libpq5: runtime cho psycopg2, netcat-openbsd: entrypoint.sh dùng `nc` chờ DB
+RUN apt-get update -yqq \
+    && apt-get install -yqq --no-install-recommends libpq5 netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
 # set working directory
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-# add requirements
-COPY ./requirements.txt /usr/src/app/requirements.txt
-
-# install requirements
-RUN pip install -r requirements.txt
+# install requirements từ wheels đã build sẵn
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 
 # Copy source code
 COPY . /usr/src/app
